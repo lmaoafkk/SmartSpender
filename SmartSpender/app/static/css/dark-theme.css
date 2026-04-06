@@ -1,0 +1,694 @@
+/* ========================================
+   DARK THEME CSS - Inspired by Modern Finance Apps
+   Colors: Deep Navy/Black background with Teal accents
+   ======================================== */
+
+:root {
+    /* Backgrounds - FIXED Dark colors */
+    --bg-primary: #0A0A1A;
+    --bg-secondary: #0D1117;
+    --bg-card: #161B22;
+    --bg-card-hover: #1F242F;
+    --bg-sidebar: #0A0A1A;
+    --bg-input: #0D1117;
+    
+    /* Text Colors */
+    --text-primary: #FFFFFF;
+    --text-secondary: #8B949E;
+    --text-muted: #6E7681;
+    
+    /* Borders */
+    --border: #21262D;
+    --border-light: #30363D;
+    
+    /* Accent Colors */
+    --accent-primary: #00D4AA;
+    --accent-primary-dark: #00B894;
+    --accent-secondary: #6C5CE7;
+    --accent-secondary-dark: #5B4BCF;
+    --accent-purple: #A29BFE;
+    --accent-blue: #0984E3;
+    --accent-yellow: #FDCB6E;
+    
+    /* Status Colors */
+    --success: #00D4AA;
+    --success-dark: #00B894;
+    --danger: #FF5E7E;
+    --danger-dark: #E8456B;
+    --warning: #FDCB6E;
+    --info: #0984E3;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+    --gradient-secondary: linear-gradient(135deg, #6C5CE7 0%, #5B4BCF 100%);
+    --gradient-danger: linear-gradient(135deg, #FF5E7E 0%, #E8456B 100%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+}
+
+/* ========================================
+   SIDEBAR STYLES
+   ======================================== */
+
+#sidebar {
+    background-color: var(--bg-sidebar) !important;
+    border-right: 1px solid var(--border);
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+#sidebar.collapsed {
+    margin-left: -280px;
+}
+
+#sidebar .nav-link {
+    color: var(--text-secondary);
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    margin: 0.25rem 0;
+}
+
+#sidebar .nav-link:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-card);
+}
+
+#sidebar .nav-link.active {
+    color: var(--text-primary);
+    background: var(--gradient-primary);
+}
+
+#sidebar .nav-link i,
+#sidebar .nav-link .material-symbols-outlined {
+    width: 24px;
+    margin-right: 12px;
+}
+
+/* ========================================
+   MAIN CONTENT
+   ======================================== */
+
+#content {
+    margin-left: 280px;
+    padding: 1.5rem;
+    min-height: 100vh;
+    transition: all 0.3s ease;
+}
+
+/* ========================================
+   CARDS - FIXED dark background
+   ======================================== */
+
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    border-color: var(--border-light);
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.card-body {
+    color: var(--text-primary);
+}
+
+/* ========================================
+   STAT CARDS
+   ======================================== */
+
+.stat-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-primary);
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: var(--text-primary);
+}
+
+.stat-change {
+    font-size: 0.75rem;
+}
+
+.stat-change.positive {
+    color: var(--success);
+}
+
+.stat-change.negative {
+    color: var(--danger);
+}
+
+/* ========================================
+   TEXT COLORS
+   ======================================== */
+
+.income-text, .text-success {
+    color: var(--success) !important;
+}
+
+.expense-text, .text-danger {
+    color: #FF0000 !important;
+}
+
+.text-primary-custom {
+    color: var(--accent-primary) !important;
+}
+
+.text-secondary-custom {
+    color: var(--text-secondary) !important;
+}
+
+/* ========================================
+   TABLES - FIXED text colors
+   ======================================== */
+
+.table {
+    color: var(--text-primary);
+    margin-bottom: 0;
+}
+
+.table thead th {
+    border-bottom-color: var(--border);
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table tbody td {
+    border-bottom-color: var(--border);
+    vertical-align: middle;
+    color: #FFFFFF !important;
+}
+
+/* Fix for table links and content */
+.table tbody td a,
+.table tbody td span:not(.category-badge):not(.badge) {
+    color: #FFFFFF !important;
+}
+
+/* Date and Name cells - make them white */
+.table tbody td:first-child,
+.table tbody td:nth-child(2) {
+    color: #FFFFFF !important;
+    font-weight: normal;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 212, 170, 0.05);
+}
+
+.table-hover > tbody > tr:hover > * {
+    color: var(--text-primary) !important;
+}
+
+/* ========================================
+   BADGES
+   ======================================== */
+
+.category-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.category-food { background-color: rgba(0, 212, 170, 0.15); color: #00D4AA; }
+.category-transport { background-color: rgba(0, 206, 201, 0.15); color: #00CEC9; }
+.category-entertainment { background-color: rgba(162, 155, 254, 0.15); color: #A29BFE; }
+.category-shopping { background-color: rgba(255, 94, 126, 0.15); color: #FF5E7E; }
+.category-bills { background-color: rgba(9, 132, 227, 0.15); color: #0984E3; }
+.category-income { background-color: rgba(0, 212, 170, 0.15); color: #00D4AA; }
+.category-health { background-color: rgba(108, 92, 231, 0.15); color: #6C5CE7; }
+.category-other { background-color: rgba(139, 148, 158, 0.15); color: #8B949E; }
+
+/* Bootstrap badge overrides */
+.badge.bg-success {
+    background-color: var(--success) !important;
+}
+
+.badge.bg-danger {
+    background-color: var(--danger) !important;
+}
+
+.badge.bg-info {
+    background-color: var(--accent-secondary) !important;
+}
+
+/* ========================================
+   BUTTONS
+   ======================================== */
+
+.btn {
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+}
+
+.btn-outline-primary {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.btn-outline-primary:hover {
+    background: var(--gradient-primary);
+    border-color: transparent;
+    color: white;
+}
+
+.btn-secondary {
+    background: var(--gradient-secondary);
+    border: none;
+    color: white;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.3);
+}
+
+.btn-outline-secondary {
+    border-color: var(--border);
+    color: var(--text-secondary);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--bg-card);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+}
+
+.btn-danger {
+    background: var(--gradient-danger);
+    border: none;
+    color: white;
+}
+
+.btn-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(255, 94, 126, 0.3);
+}
+
+/* ========================================
+   FORMS
+   ======================================== */
+
+.form-control,
+.form-select {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    border-radius: 0.5rem;
+    padding: 0.625rem 1rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--bg-input);
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 212, 170, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.form-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* ========================================
+   MODALS
+   ======================================== */
+
+.modal-content {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+}
+
+.modal-header {
+    border-bottom-color: var(--border);
+}
+
+.modal-footer {
+    border-top-color: var(--border);
+}
+
+.modal-title {
+    color: var(--text-primary);
+}
+
+.btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* ========================================
+   PROGRESS BARS
+   ======================================== */
+
+.progress {
+    background-color: var(--bg-input);
+    border-radius: 1rem;
+    height: 8px;
+}
+
+.progress-bar {
+    background: var(--gradient-primary);
+    border-radius: 1rem;
+}
+
+.progress-bar.bg-success {
+    background: var(--gradient-primary);
+}
+
+.progress-bar.bg-danger {
+    background: var(--gradient-danger);
+}
+
+/* ========================================
+   BUDGET CARDS
+   ======================================== */
+
+.budget-card {
+    background-color: var(--bg-secondary);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 3px solid;
+    transition: all 0.2s ease;
+}
+
+.budget-card.on-track {
+    border-left-color: var(--success);
+}
+
+.budget-card.over-budget {
+    border-left-color: var(--danger);
+}
+
+/* ========================================
+   NAVBAR
+   ======================================== */
+
+.navbar {
+    background-color: var(--bg-card) !important;
+    border-radius: 1rem;
+    padding: 0.75rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+}
+
+/* ========================================
+   SEARCH INPUT
+   ======================================== */
+
+.search-input {
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    padding: 0.5rem 1rem;
+    color: var(--text-primary);
+    width: 250px;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+/* ========================================
+   TABS
+   ======================================== */
+
+.nav-tabs {
+    border-bottom-color: var(--border);
+}
+
+.nav-tabs .nav-link {
+    color: var(--text-secondary);
+    border: none;
+    padding: 0.75rem 1.25rem;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--text-primary);
+    border: none;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--accent-primary);
+    background-color: transparent;
+    border-bottom: 2px solid var(--accent-primary);
+}
+
+/* ========================================
+   DROPDOWNS
+   ======================================== */
+
+.dropdown-menu {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border);
+}
+
+.dropdown-menu-dark .dropdown-item {
+    color: var(--text-secondary);
+}
+
+.dropdown-menu-dark .dropdown-item:hover {
+    background-color: var(--bg-card-hover);
+    color: var(--text-primary);
+}
+
+.dropdown-divider {
+    border-top-color: var(--border);
+}
+
+/* ========================================
+   CATEGORY LIST ITEMS
+   ======================================== */
+
+.category-item {
+    transition: all 0.2s ease;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+}
+
+.category-item:hover {
+    background-color: var(--bg-card-hover);
+    transform: translateX(5px);
+}
+
+/* ========================================
+   SCROLLBAR
+   ======================================== */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: -280px;
+    }
+
+    #sidebar.show {
+        margin-left: 0;
+    }
+
+    #content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .search-input {
+        width: 150px;
+    }
+}
+
+/* ========================================
+   ANIMATIONS
+   ======================================== */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card,
+.stat-card,
+.budget-card {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* ========================================
+   CHARTS (Highcharts Overrides)
+   ======================================== */
+
+.highcharts-background {
+    fill: transparent;
+}
+
+.highcharts-title {
+    fill: var(--text-primary) !important;
+}
+
+.highcharts-axis-labels text {
+    fill: var(--text-secondary) !important;
+}
+
+.highcharts-legend-item text {
+    fill: var(--text-primary) !important;
+}
+
+/* ========================================
+   LINKS
+   ======================================== */
+
+a {
+    color: var(--accent-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+a:hover {
+    color: var(--accent-primary-dark);
+}
+
+/* ========================================
+   ADDITIONAL FIXES FOR DARK TEXT
+   ======================================== */
+
+/* Make sure all text in cards is white */
+.card .card-title,
+.card .card-text,
+.card h1, .card h2, .card h3, .card h4, .card h5, .card h6,
+.card p, .card span:not(.category-badge):not(.badge) {
+    color: var(--text-primary);
+}
+
+/* Fix for any black text in tables */
+table td, table th {
+    color: var(--text-primary) !important;
+}
+
+.table td {
+    color: #FFFFFF !important;
+}
+
+.table tr td {
+    color: #FFFFFF !important;
+}
+
+/* Fix for modal text */
+.modal-body, .modal-body label, .modal-body input, .modal-body select {
+    color: var(--text-primary);
+}
+
+/* Fix for dropdown text */
+.dropdown-item {
+    color: var(--text-secondary);
+}
+
+.dropdown-item:hover {
+    color: var(--text-primary);
+}
+
+/* Fix for alert messages */
+.alert {
+    color: var(--text-primary);
+    background-color: var(--bg-card);
+    border-color: var(--border);
+}

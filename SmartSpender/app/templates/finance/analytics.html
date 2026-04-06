@@ -1,0 +1,618 @@
+{% extends "authenticated-base.html" %}
+
+{% block title %}Analytics - SmartSpender{% endblock %}
+
+{% block subpage_content %}
+<div class="container-fluid px-0">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h2 class="mb-0">📊 Analytics</h2>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="row g-4">
+        <!-- Left Column - Expense Summary -->
+        <div class="col-lg-5">
+            <div class="card text-center p-4">
+                <p class="text-muted mb-2">Total Expense</p>
+                <h1 class="display-3 expense-text fw-bold" id="total-expense-amount">$0</h1>
+                <p class="text-muted small" id="expense-change">No data yet</p>
+                <div id="expense-donut-chart" style="height: 180px; margin-top: 1rem;"></div>
+            </div>
+        </div>
+
+        <!-- Right Column - Category Breakdown -->
+        <div class="col-lg-7">
+            <div class="card p-4">
+                <h5 class="mb-3">Spending by Category</h5>
+                <div id="category-list">
+                    <div class="text-center text-muted py-4">Loading categories...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Savings Overview Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <h5 class="mb-0">💰 Monthly Savings</h5>
+                    <span class="badge" id="savings-rate-badge" style="background: var(--accent-primary);">0% Savings Rate</span>
+                </div>
+                
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <p class="text-muted mb-1">Savings Amount</p>
+                        <h2 class="income-text fw-bold" id="monthly-savings">$0</h2>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="progress mb-2" style="height: 12px;">
+                            <div class="progress-bar" id="savings-progress" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <p class="text-muted small mb-0" id="savings-percent-text">0% of total income</p>
+                    </div>
+                </div>
+                
+                <div class="row mt-4 pt-3 border-top" style="border-color: var(--border);">
+                    <div class="col-6">
+                        <div class="text-center p-3 rounded" style="background-color: var(--bg-secondary);">
+                            <p class="text-muted mb-1">Total Income</p>
+                            <h4 class="income-text" id="total-income-savings">$0</h4>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 rounded" style="background-color: var(--bg-secondary);">
+                            <p class="text-muted mb-1">Total Expenses</p>
+                            <h4 class="expense-text" id="total-expenses-savings">$0</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Expenses List -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">📋 Recent Expenditures</h5>
+                    <a href="/finance/transactions" class="btn btn-sm btn-outline-secondary">View All →</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>DATE</th>
+                                <th>NAME</th>
+                                <th>CATEGORY</th>
+                                <th class="text-end">AMOUNT</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-expenses-body">
+                            <tr><td colspan="4" class="text-center text-muted py-4">Loading transactions...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income vs Expenses Chart -->
+    <div class="row mt-4">
+        <div class="col-lg-6">
+            <div class="card p-4">
+                <div id="income-expense-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+        
+        <!-- Transaction Type Chart -->
+        <div class="col-lg-6">
+            <div class="card p-4">
+                <div id="transaction-type-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Load Highcharts first -->
+<script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.6/highcharts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/highcharts@11.4.6/highcharts-more.js"></script>
+
+<script>
+    // Wait a moment for Highcharts to be fully loaded
+    setTimeout(() => {
+        if (typeof Highcharts === 'undefined') {
+            console.error('Highcharts failed to load');
+            return;
+        }
+
+        console.log('Highcharts loaded successfully, initializing...');
+
+        let expenseDonutChart = null;
+
+        // Custom Highcharts pie animation
+        (function (H) {
+            try {
+                H.seriesTypes.pie.prototype.animate = function (init) {
+                    const series = this,
+                        chart = series.chart,
+                        points = series.points,
+                        animation = series.options.animation,
+                        startAngleRad = series.startAngleRad;
+
+                    function fanAnimate(point, startAngleRad) {
+                        const graphic = point.graphic,
+                            args = point.shapeArgs;
+
+                        if (graphic && args) {
+                            graphic
+                                .attr({
+                                    start: startAngleRad,
+                                    end: startAngleRad,
+                                    opacity: 1
+                                })
+                                .animate({
+                                    start: args.start,
+                                    end: args.end
+                                }, {
+                                    duration: animation.duration / points.length
+                                }, function () {
+                                    if (points[point.index + 1]) {
+                                        fanAnimate(points[point.index + 1], args.end);
+                                    }
+                                    if (point.index === series.points.length - 1) {
+                                        series.dataLabelsGroup.animate({
+                                            opacity: 1
+                                        },
+                                        void 0,
+                                        function () {
+                                            points.forEach(point => {
+                                                point.opacity = 1;
+                                            });
+                                            series.update({
+                                                enableMouseTracking: true
+                                            }, false);
+                                        });
+                                    }
+                                });
+                        }
+                    }
+
+                    if (init) {
+                        points.forEach(point => {
+                            point.opacity = 0;
+                        });
+                    } else {
+                        fanAnimate(points[0], startAngleRad);
+                    }
+                };
+            } catch (e) {
+                console.error('Error setting custom animation:', e);
+            }
+        }(Highcharts));
+
+        // Format currency
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Create Donut Chart
+        function createDonutChart(categoryData) {
+            if (expenseDonutChart) {
+                expenseDonutChart.destroy();
+            }
+            
+            const chartData = categoryData.filter(c => c.amount > 0);
+            
+            if (chartData.length === 0) {
+                document.getElementById('expense-donut-chart').innerHTML = '<div class="text-center text-muted py-4">No expense data</div>';
+                return;
+            }
+            
+            const colors = ['#00D4AA', '#FF5E7E', '#6C5CE7', '#FDCB6E', '#00CEC9', '#0984E3', '#A29BFE'];
+            const totalAmount = chartData.reduce((sum, item) => sum + item.amount, 0);
+            
+            const formattedData = chartData.map((item, index) => ({
+                name: item.category.charAt(0).toUpperCase() + item.category.slice(1),
+                y: item.amount,
+                color: colors[index % colors.length],
+                percentage: ((item.amount / totalAmount) * 100).toFixed(2)
+            }));
+            
+            expenseDonutChart = Highcharts.chart('expense-donut-chart', {
+                chart: {
+                    type: 'pie',
+                    backgroundColor: 'transparent',
+                    plotBackgroundColor: null,
+                    plotBorderWidth: 0,
+                    plotShadow: false,
+                    height: 180,
+                    events: {
+                        load: function() {
+                            // Add hover effects on load
+                            this.series[0].points.forEach(point => {
+                                point.hovered = false;
+                            });
+                        }
+                    }
+                },
+                title: { text: null },
+                tooltip: {
+                    enabled: true,
+                    headerFormat: '',
+                    formatter: function() {
+                        const point = this.point;
+                        const total = totalAmount;
+                        return `
+                            <div style="padding: 8px; min-width: 200px;">
+                                <strong style="color: ${point.color}; font-size: 14px;">
+                                    ● ${point.name}
+                                </strong><br/>
+                                <div style="margin-top: 5px; line-height: 1.6;">
+                                    <span>Amount: <strong>$${point.y.toFixed(2)}</strong></span><br/>
+                                    <span>Percentage: <strong>${point.percentage}%</strong></span><br/>
+                                    <span>of Total: <strong>$${total.toFixed(2)}</strong></span>
+                                </div>
+                            </div>
+                        `;
+                    },
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    borderColor: 'transparent',
+                    style: {
+                        color: '#fff',
+                        fontSize: '12px'
+                    },
+                    shadow: true,
+                    useHTML: true
+                },
+                plotOptions: {
+                    pie: {
+                        allowPointSelect: true,
+                        borderWidth: 2,
+                        borderColor: '#fff',
+                        cursor: 'pointer',
+                        dataLabels: { 
+                            enabled: true,
+                            format: '<b>{point.name}</b><br/>{point.percentage}%',
+                            distance: 15,
+                            style: {
+                                color: '#fff',
+                                fontSize: '11px',
+                                fontWeight: 'bold',
+                                textOutline: '1px contrast'
+                            }
+                        },
+                        size: '100%',
+                        innerSize: '60%',
+                        states: {
+                            hover: {
+                                brightness: 0.2,
+                                filter: {
+                                    type: 'shadow',
+                                    color: 'rgba(0, 0, 0, 0.5)',
+                                    offsetX: 0,
+                                    offsetY: 3,
+                                    blur: 8
+                                }
+                            },
+                            select: {
+                                brightness: 0.1,
+                                filter: {
+                                    type: 'shadow',
+                                    color: 'rgba(0, 212, 170, 0.8)',
+                                    offsetX: 0,
+                                    offsetY: 5,
+                                    blur: 12
+                                }
+                            }
+                        },
+                        point: {
+                            events: {
+                                mouseOver: function() {
+                                    this.hovered = true;
+                                    // Scale up the slice slightly
+                                    this.update({
+                                        sliced: true
+                                    }, false, {
+                                        duration: 200
+                                    });
+                                },
+                                mouseOut: function() {
+                                    this.hovered = false;
+                                    // Reset the slice
+                                    this.update({
+                                        sliced: false
+                                    }, false, {
+                                        duration: 200
+                                    });
+                                },
+                                click: function() {
+                                    // On click, show detailed view
+                                    console.log(`Clicked on ${this.name}: $${this.y}`);
+                                }
+                            }
+                        }
+                    }
+                },
+                series: [{
+                    name: 'Expenses',
+                    enableMouseTracking: true,
+                    animation: { duration: 2000 },
+                    colorByPoint: true,
+                    data: formattedData,
+                    size: '100%',
+                    innerSize: '60%'
+                }],
+                credits: { enabled: false }
+            });
+        }
+
+        // Create Category List
+        function createCategoryList(categoryData, totalExpense) {
+            const container = document.getElementById('category-list');
+            
+            if (!categoryData || categoryData.length === 0 || totalExpense === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-4">No expense data to display</div>';
+                return;
+            }
+            
+            const sorted = [...categoryData].sort((a, b) => b.amount - a.amount);
+            container.innerHTML = '';
+            
+            const categoryColors = {
+                food: '#00D4AA',
+                transport: '#00CEC9',
+                entertainment: '#A29BFE',
+                shopping: '#FF5E7E',
+                bills: '#0984E3',
+                health: '#6C5CE7',
+                other: '#8B949E'
+            };
+            
+            sorted.forEach(cat => {
+                const percentage = totalExpense > 0 ? (cat.amount / totalExpense * 100).toFixed(2) : 0;
+                const barColor = categoryColors[cat.category] || '#6C5CE7';
+                
+                container.innerHTML += `
+                    <div class="category-item mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-medium">${cat.category.charAt(0).toUpperCase() + cat.category.slice(1)}</span>
+                            <div>
+                                <span class="fw-bold">${percentage}%</span>
+                                <span class="text-muted ms-2">${formatCurrency(cat.amount)}</span>
+                            </div>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: ${percentage}%; background-color: ${barColor};"></div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Load Recent Expenses
+        function loadRecentExpenses(transactions) {
+            const tbody = document.getElementById('recent-expenses-body');
+            
+            if (!transactions || transactions.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No transactions yet</td></tr>';
+                return;
+            }
+            
+            const expenses = transactions.filter(t => t.type === 'expense').slice(0, 5);
+            
+            if (expenses.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No expenses recorded yet</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = '';
+            expenses.forEach(exp => {
+                let formattedDate = 'N/A';
+                if (exp.date) {
+                    try {
+                        const dateObj = new Date(exp.date);
+                        formattedDate = dateObj.toLocaleDateString('en-US');
+                    } catch (e) {
+                        formattedDate = exp.date;
+                    }
+                }
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${formattedDate}</td>
+                        <td>${exp.name || 'Unknown'}</td>
+                        <td><span class="category-badge category-${exp.category || 'other'}">${exp.category || 'other'}</span></td>
+                        <td class="text-end expense-text">-${formatCurrency(exp.amount || 0)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Create Income vs Expenses Chart
+        function createIncomeExpenseChart(summary) {
+            if (!document.getElementById('income-expense-chart')) return;
+            
+            Highcharts.chart('income-expense-chart', {
+                chart: { 
+                    type: 'column', 
+                    backgroundColor: 'transparent',
+                    style: { fontFamily: 'Inter, sans-serif' }
+                },
+                title: { 
+                    text: 'Income vs Expenses',
+                    style: { color: '#fff', fontSize: '16px', fontWeight: '600' }
+                },
+                xAxis: { 
+                    categories: ['Income', 'Expenses'],
+                    labels: { style: { color: '#8B949E', fontSize: '12px' } },
+                    lineColor: '#21262D'
+                },
+                yAxis: {
+                    title: { 
+                        text: 'Amount ($)',
+                        style: { color: '#8B949E', fontSize: '12px' }
+                    },
+                    labels: { style: { color: '#8B949E', fontSize: '12px' } },
+                    gridLineColor: '#21262D'
+                },
+                plotOptions: {
+                    column: {
+                        pointPadding: 0.2,
+                        borderWidth: 0
+                    }
+                },
+                series: [{
+                    name: 'Amount',
+                    data: [
+                        { y: summary.total_income || 0, color: '#00D4AA' },
+                        { y: summary.total_expenses || 0, color: '#FF0000' }
+                    ]
+                }],
+                tooltip: {
+                    pointFormat: '<b>${point.y:.2f}</b>'
+                },
+                credits: { enabled: false },
+                legend: { enabled: false }
+            });
+        }
+
+        // Create Transaction Type Chart
+        function createTransactionTypeChart(transactions) {
+            if (!document.getElementById('transaction-type-chart')) return;
+            
+            const income = transactions.filter(t => t.type === 'income').length || 0;
+            const expense = transactions.filter(t => t.type === 'expense').length || 0;
+            
+            Highcharts.chart('transaction-type-chart', {
+                chart: { 
+                    type: 'bar', 
+                    backgroundColor: 'transparent',
+                    style: { fontFamily: 'Inter, sans-serif' }
+                },
+                title: { 
+                    text: 'Transaction Count',
+                    style: { color: '#fff', fontSize: '16px', fontWeight: '600' }
+                },
+                xAxis: { 
+                    categories: ['Income', 'Expense'],
+                    labels: { style: { color: '#8B949E', fontSize: '12px' } },
+                    lineColor: '#21262D'
+                },
+                yAxis: {
+                    title: { 
+                        text: 'Count',
+                        style: { color: '#8B949E', fontSize: '12px' }
+                    },
+                    labels: { style: { color: '#8B949E', fontSize: '12px' } },
+                    gridLineColor: '#21262D'
+                },
+                series: [{
+                    name: 'Transactions',
+                    data: [
+                        { y: income, color: '#00D4AA' },
+                        { y: expense, color: '#FF0000' }
+                    ]
+                }],
+                tooltip: {
+                    pointFormat: '<b>{point.y} transactions</b>'
+                },
+                credits: { enabled: false },
+                legend: { enabled: false }
+            });
+        }
+
+        // Load all analytics data
+        async function loadAllAnalytics() {
+            console.log('Loading analytics data...');
+            
+            try {
+                const summaryResponse = await fetch('/finance/api/reports/summary');
+                if (!summaryResponse.ok) throw new Error(`Summary API failed: ${summaryResponse.status}`);
+                const summary = await summaryResponse.json();
+                
+                const categoryResponse = await fetch('/finance/api/reports/category-breakdown');
+                if (!categoryResponse.ok) throw new Error(`Category API failed: ${categoryResponse.status}`);
+                const categoryData = await categoryResponse.json();
+                
+                const transactionsResponse = await fetch('/finance/api/transactions');
+                if (!transactionsResponse.ok) throw new Error(`Transactions API failed: ${transactionsResponse.status}`);
+                const allTransactions = await transactionsResponse.json();
+                
+                console.log('Data loaded successfully:', { summary, categoryData, allTransactions });
+                
+                const totalExpense = summary.total_expenses || 0;
+                const totalIncome = summary.total_income || 0;
+                const netSavings = summary.net_savings || 0;
+                
+                document.getElementById('total-expense-amount').innerHTML = formatCurrency(totalExpense);
+                document.getElementById('expense-change').innerHTML = totalExpense > 0 ? 'Total expenses this month' : 'No expenses recorded';
+                
+                const savingsRate = totalIncome > 0 ? (netSavings / totalIncome * 100).toFixed(1) : 0;
+                document.getElementById('monthly-savings').innerHTML = formatCurrency(netSavings);
+                document.getElementById('total-income-savings').innerHTML = formatCurrency(totalIncome);
+                document.getElementById('total-expenses-savings').innerHTML = formatCurrency(totalExpense);
+                document.getElementById('savings-progress').style.width = `${savingsRate}%`;
+                document.getElementById('savings-rate-badge').innerHTML = `${savingsRate}% Savings Rate`;
+                document.getElementById('savings-percent-text').innerHTML = `${savingsRate}% of total income`;
+                
+                if (categoryData && categoryData.length > 0 && totalExpense > 0) {
+                    createDonutChart(categoryData);
+                    createCategoryList(categoryData, totalExpense);
+                } else {
+                    document.getElementById('expense-donut-chart').innerHTML = '<div class="text-center text-muted py-4">No expense data yet</div>';
+                    document.getElementById('category-list').innerHTML = '<div class="text-center text-muted py-4">Add expenses to see breakdown</div>';
+                }
+                
+                loadRecentExpenses(allTransactions);
+                createIncomeExpenseChart(summary);
+                createTransactionTypeChart(allTransactions);
+                
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                const errorMsg = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                document.getElementById('category-list').innerHTML = errorMsg;
+                document.getElementById('recent-expenses-body').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Error loading data</td></tr>';
+            }
+        }
+
+        // Load analytics when page is ready
+        loadAllAnalytics();
+
+    }, 500);
+</script>
+
+<style>
+    .category-item {
+        transition: all 0.2s ease;
+        padding: 0.5rem;
+        border-radius: 0.5rem;
+    }
+    .category-item:hover {
+        background-color: var(--bg-card-hover);
+        transform: translateX(5px);
+    }
+    .progress {
+        background-color: var(--bg-secondary);
+        border-radius: 10px;
+    }
+    .progress-bar {
+        border-radius: 10px;
+        transition: width 0.5s ease;
+    }
+    #expense-donut-chart {
+        min-height: 180px;
+    }
+</style>
+{% endblock %}

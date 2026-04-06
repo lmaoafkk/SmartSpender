@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% block title %}SmartSpender - Smart Finance Tracking{% endblock %}
+
+{% block internal_css %}
+<style>
+    /* Video Background */
+    .video-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: -2;
+    }
+    
+    .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: -1;
+    }
+    
+    /* Centered Logo */
+    .logo-container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        z-index: 2;
+        width: 100%;
+    }
+    
+    .logo {
+        font-size: 4rem;
+        font-weight: 800;
+        color: white;
+        text-shadow: 0 4px 30px rgba(0, 212, 170, 0.3);
+        letter-spacing: -0.02em;
+    }
+    
+    .logo-sub {
+        font-size: 1rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 1rem;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Bottom Buttons */
+    .action-buttons {
+        position: absolute;
+        bottom: 50px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 2;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        padding: 0 1rem;
+    }
+    
+    .action-btn {
+        padding: 0.9rem 2rem;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        font-family: inherit;
+    }
+    
+    .btn-create {
+        background: linear-gradient(135deg, #00D4AA 0%, #00B894 100%);
+        color: white;
+        box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+    }
+    
+    .btn-create:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 212, 170, 0.4);
+    }
+    
+    .btn-login {
+        background: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(10px);
+    }
+    
+    .btn-login:hover {
+        border-color: #00D4AA;
+        background: rgba(0, 212, 170, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .logo { font-size: 2.5rem; }
+        .logo-sub { font-size: 0.8rem; }
+        .action-btn { padding: 0.7rem 1.5rem; font-size: 0.9rem; }
+        .action-buttons { bottom: 30px; gap: 0.75rem; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Video Background -->
+<video class="video-background" autoplay loop muted playsinline>
+    <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-currency-with-coins-and-graphs-23273-large.mp4" type="video/mp4">
+</video>
+<div class="overlay"></div>
+
+<!-- Centered Logo -->
+<div class="logo-container">
+    <div class="logo">SmartSpender</div>
+    <div class="logo-sub">Smart Finance Tracking</div>
+</div>
+
+<!-- Action Buttons -->
+<div class="action-buttons">
+    <button class="action-btn btn-create" onclick="openSlidePanel('register')">Create Account</button>
+    <button class="action-btn btn-login" onclick="openSlidePanel('login')">Log In</button>
+</div>
+
+<!-- Slide-in Panels Container -->
+<div id="slidePanel" class="slide-panel">
+    <div class="slide-panel-content">
+        <button class="close-panel" onclick="closeSlidePanel()">×</button>
+        <div id="panelContent">
+            <!-- Dynamic content loads here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block external_js %}
+<script>
+    // Slide panel functions
+    function openSlidePanel(type) {
+        const panel = document.getElementById('slidePanel');
+        const panelContent = document.getElementById('panelContent');
+        
+        if (type === 'login') {
+            panelContent.innerHTML = `
+                <div class="panel-header">
+                    <h2>Welcome Back</h2>
+                    <p>Sign in to continue</p>
+                </div>
+                <form id="slideLoginForm">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="username" class="panel-input" required placeholder="Enter your username">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" name="password" class="panel-input" required placeholder="Enter your password">
+                    </div>
+                    <button type="submit" class="panel-submit">Sign In</button>
+                </form>
+                <div class="panel-footer">
+                    <p>Don't have an account? <a href="#" onclick="switchToRegister(); return false;">Create one</a></p>
+                </div>
+            `;
+            
+            document.getElementById('slideLoginForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    const text = await response.text();
+                    if (text.includes('Incorrect')) {
+                        showPanelError('Invalid username or password');
+                    }
+                }
+            });
+        } 
+        else if (type === 'register') {
+            panelContent.innerHTML = `
+                <div class="panel-header">
+                    <h2>Create Account</h2>
+                    <p>Start tracking your finances today</p>
+                </div>
+                <form id="slideRegisterForm">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" name="username" class="panel-input" required placeholder="Choose a username">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" name="email" class="panel-input" required placeholder="your@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" name="password" class="panel-input" required placeholder="Create a password">
+                    </div>
+                    <button type="submit" class="panel-submit">Create Account</button>
+                </form>
+                <div class="panel-footer">
+                    <p>Already have an account? <a href="#" onclick="switchToLogin(); return false;">Sign in</a></p>
+                </div>
+            `;
+            
+            document.getElementById('slideRegisterForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    const text = await response.text();
+                    if (text.includes('already exists')) {
+                        showPanelError('Username or email already exists');
+                    }
+                }
+            });
+        }
+        
+        panel.classList.add('open');
+    }
+    
+    function closeSlidePanel() {
+        document.getElementById('slidePanel').classList.remove('open');
+    }
+    
+    function switchToLogin() {
+        openSlidePanel('login');
+    }
+    
+    function switchToRegister() {
+        openSlidePanel('register');
+    }
+    
+    function showPanelError(message) {
+        let errorDiv = document.querySelector('.panel-error');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'panel-error';
+            document.querySelector('#panelContent form').prepend(errorDiv);
+        }
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 3000);
+    }
+    
+    // Close panel when clicking outside
+    document.getElementById('slidePanel').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeSlidePanel();
+        }
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeSlidePanel();
+        }
+    });
+</script>
+{% endblock %}

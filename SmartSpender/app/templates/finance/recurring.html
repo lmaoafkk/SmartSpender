@@ -1,0 +1,87 @@
+{% extends "authenticated-base.html" %}
+
+{% block title %}Recurring - SmartSpender{% endblock %}
+
+{% block subpage_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><span class="material-symbols-outlined me-2">repeat</span> Subscriptions & Recurring Payments</span>
+        <button class="btn btn-primary btn-sm" onclick="showSubscriptionModal()">
+            <span class="material-symbols-outlined me-1">add</span>
+            Add Subscription
+        </button>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr><th>Name</th><th>Amount</th><th>Category</th><th>Next Billing</th><th>Actions</th></tr>
+                </thead>
+                <tbody id="recurring-body">
+                    <tr><td colspan="5" class="text-center text-muted">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Subscription Modal -->
+<div class="modal fade" id="subscriptionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Add Subscription</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Service Name</label><input type="text" id="sub-name" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label">Amount</label><input type="number" id="sub-amount" class="form-control" required></div>
+                <div class="mb-3"><label class="form-label">Category</label><select id="sub-category" class="form-select"><option value="entertainment">Entertainment</option><option value="bills">Bills</option><option value="other">Other</option></select></div>
+                <div class="mb-3"><label class="form-label">Next Billing Date</label><input type="date" id="sub-next-date" class="form-control" required></div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button class="btn btn-primary" onclick="saveSubscriptionAndRefresh()">Save</button></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', path='js/finance.js') }}"></script>
+<script>
+    async function loadRecurring() {
+        try {
+            const transactions = await apiCall('/transactions');
+            const subs = transactions.filter(t => t.is_subscription);
+            const tbody = document.getElementById('recurring-body');
+            if (subs.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No subscriptions yet</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '';
+            subs.forEach(s => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${s.name}</strong></td>
+                        <td class="expense-text">-$${s.amount.toFixed(2)}</td>
+                        <td><span class="category-badge category-${s.category}">${s.category}</span></td>
+                        <td>${s.next_billing_date || 'N/A'}</td>
+                        <td><button class="btn btn-sm btn-danger" onclick="deleteSubscriptionAndRefresh(${s.id})">Cancel</button></td>
+                    </tr>
+                `;
+            });
+        } catch(e) { console.error(e); }
+    }
+    
+    async function saveSubscriptionAndRefresh() {
+        await saveSubscription();
+        closeModal('subscriptionModal');
+        await loadRecurring();
+    }
+    
+    async function deleteSubscriptionAndRefresh(id) {
+        if (confirm('Cancel this subscription?')) {
+            await deleteTransaction(id);
+            await loadRecurring();
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', loadRecurring);
+</script>
+{% endblock %}

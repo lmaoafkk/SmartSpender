@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Redirecting...{% endblock %}
+
+{% block internal_css %}
+<style>
+    body {
+        background: #0A0A1A;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: 'Inter', sans-serif;
+    }
+    
+    .redirect-container {
+        text-align: center;
+        color: white;
+    }
+    
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 3px solid rgba(0, 212, 170, 0.3);
+        border-top-color: #00D4AA;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem auto;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .redirect-container a {
+        color: #00D4AA;
+        text-decoration: none;
+    }
+    
+    .redirect-container a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Flash Messages -->
+{% for message in get_flashed_messages(request) %}
+    <div class="alert alert-{{ message.type }} alert-dismissible fade show position-fixed top-0 start-0 m-3" role="alert" style="z-index: 9999; width: auto; max-width: 500px;">
+        {{ message.message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+
+<div class="redirect-container">
+    <div class="spinner"></div>
+    <p>Redirecting to <a href="/">SmartSpender</a>...</p>
+</div>
+
+<script>
+    // Redirect to landing page immediately
+    window.location.href = "/";
+</script>
+{% endblock %}

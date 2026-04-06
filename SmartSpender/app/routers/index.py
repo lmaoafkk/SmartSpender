@@ -1,0 +1,28 @@
+from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi import Request, status
+from app.dependencies.auth import IsUserLoggedIn, get_current_user, is_admin
+from app.dependencies.session import SessionDep
+from . import router, templates
+
+
+@router.get("/", response_class=HTMLResponse)
+async def landing_view(request: Request):
+    return templates.TemplateResponse(
+        request=request, 
+        name="landing_standalone.html",
+    )
+
+
+@router.get("/app", response_class=RedirectResponse)
+async def index_view(
+    request: Request,
+    user_logged_in: IsUserLoggedIn,
+    db: SessionDep
+):
+    if user_logged_in:
+        user = await get_current_user(request, db)
+        if await is_admin(user):
+            return RedirectResponse(url=request.url_for('admin_home_view'), status_code=status.HTTP_303_SEE_OTHER)
+        return RedirectResponse(url=request.url_for('user_home_view'), status_code=status.HTTP_303_SEE_OTHER)
+    # If NOT logged in, go to landing page
+    return RedirectResponse(url=request.url_for('landing_view'), status_code=status.HTTP_303_SEE_OTHER)
