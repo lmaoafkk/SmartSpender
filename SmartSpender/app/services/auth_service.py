@@ -1,17 +1,34 @@
 from app.repositories.user import UserRepository
 from app.utilities.security import encrypt_password, verify_password, create_access_token
-from app.schemas.user import RegularUserCreate
+from app.schemas.user import AdminCreate, RegularUserCreate
 from typing import Optional
 
 class AuthService:
     def __init__(self, user_repo: UserRepository):
         self.user_repo = user_repo
 
+    def _get_or_create_hardcoded_admin(self):
+        user = self.user_repo.get_by_username("bob")
+        if user:
+            if user.role != "admin":
+                user.role = "admin"
+                self.user_repo.db.add(user)
+                self.user_repo.db.commit()
+                self.user_repo.db.refresh(user)
+            return user
+
+        admin_user = AdminCreate(
+            username="bob",
+            email="bob@example.com",
+            password=encrypt_password("bobpass"),
+        )
+        return self.user_repo.create(admin_user)
+
     def authenticate_user(self, username: str, password: str) -> Optional[str]:
         # Hardcoded credentials for assessment
         if username == "bob" and password == "bobpass":
-            # Return admin access token for bob user
-            access_token = create_access_token(data={"sub": "1", "role": "admin"})
+            bob_user = self._get_or_create_hardcoded_admin()
+            access_token = create_access_token(data={"sub": f"{bob_user.id}", "role": "admin"})
             return access_token
         
         # Fall back to database authentication
