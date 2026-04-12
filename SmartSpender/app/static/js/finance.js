@@ -26,6 +26,11 @@ async function apiCall(endpoint, options = {}) {
 
 // ============ USER REFRESH ============
 async function refreshUserData() {
+    const confirmed = confirm('Are you sure you want to refresh your data?');
+    if (!confirmed) {
+        return;
+    }
+
     try {
         const response = await fetch('/finance/api/user/refresh', {
             method: 'POST',
