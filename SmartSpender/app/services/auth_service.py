@@ -31,8 +31,10 @@ class AuthService:
             access_token = create_access_token(data={"sub": f"{bob_user.id}", "role": "admin"})
             return access_token
         
-        # Fall back to database authentication
+        # Fall back to database authentication, accepting either username or email.
         user = self.user_repo.get_by_username(username)
+        if not user and "@" in username:
+            user = self.user_repo.get_by_email(username)
         if not user or not verify_password(plaintext_password=password, encrypted_password=user.password):
             return None
         access_token = create_access_token(data={"sub": f"{user.id}", "role": user.role})
