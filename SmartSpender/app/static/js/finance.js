@@ -24,6 +24,30 @@ async function apiCall(endpoint, options = {}) {
     }
 }
 
+// ============ USER REFRESH ============
+async function refreshUserData() {
+    try {
+        const response = await fetch('/finance/api/user/refresh', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error || 'Failed to refresh user data');
+        }
+
+        await response.json();
+        alert('User data refreshed successfully!');
+        location.reload();
+    } catch (error) {
+        console.error('Error refreshing user data:', error);
+        alert('Error refreshing data: ' + error.message);
+    }
+}
+
 // ============ SALARY FUNCTIONS ============
 async function updateSalary() {
     const salaryInput = document.getElementById('salary-amount');
@@ -361,5 +385,6 @@ console.log('Functions available:', {
     showTransactionModal: typeof showTransactionModal,
     showSubscriptionModal: typeof showSubscriptionModal,
     showSalaryModal: typeof showSalaryModal,
-    showBudgetModal: typeof showBudgetModal
+    showBudgetModal: typeof showBudgetModal,
+    refreshUserData: typeof refreshUserData
 });

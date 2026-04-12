@@ -199,3 +199,26 @@ async def update_salary(salary: float, session: SessionDep, current_user: AuthDe
     session.refresh(current_user)
     
     return {"message": "Salary updated", "salary": current_user.salary}
+
+
+@router.post("/api/user/refresh")
+async def refresh_user_data(session: SessionDep, current_user: AuthDep):
+    # Delete all transactions for this user
+    txn_repo = TransactionRepository(session)
+    all_transactions = txn_repo.get_all(current_user.id)
+    for txn in all_transactions:
+        txn_repo.delete(txn)
+    
+    # Delete all budgets for this user
+    budget_repo = BudgetRepository(session)
+    all_budgets = budget_repo.get_all(current_user.id)
+    for budget in all_budgets:
+        budget_repo.delete(budget.id, current_user.id)
+    
+    # Reset salary to 0
+    current_user.salary = 0.0
+    session.add(current_user)
+    session.commit()
+    session.expire_all()
+    session.refresh(current_user)
+    return {"message": "User data refreshed successfully - all transactions, budgets, and salary cleared"}
