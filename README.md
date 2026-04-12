@@ -2,6 +2,8 @@
 
 A FastAPI web application for personal finance management, featuring transaction tracking, budgeting, analytics, and user authentication.
 
+##Accees the site by going to https://smartspender-3bft.onrender.com/
+
 ## Features
 
 - Transaction tracking (income/expenses)
