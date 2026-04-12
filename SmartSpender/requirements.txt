@@ -5,6 +5,7 @@ httpx
 itsdangerous
 jinja2
 psycopg2-binary
+pydantic-settings
 pwdlib[argon2]
 pyjwt
 python-dotenv
