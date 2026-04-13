@@ -191,6 +191,17 @@ async def create_or_update_budget(budget_data: BudgetCreate, session: SessionDep
     }
 
 
+@router.delete("/api/budgets/{budget_id}")
+async def delete_budget(budget_id: int, session: SessionDep, current_user: AuthDep):
+    repo = BudgetRepository(session)
+    deleted = repo.delete(budget_id, current_user.id)
+
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Budget not found")
+
+    return {"message": "Budget deleted"}
+
+
 @router.put("/api/user/salary")
 async def update_salary(salary: float, session: SessionDep, current_user: AuthDep):
     current_user.salary = salary

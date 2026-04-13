@@ -1,4 +1,4 @@
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi import Request, status, Form
 from app.dependencies import SessionDep
 from . import router, templates
@@ -21,16 +21,20 @@ async def login_action_ajax(
     auth_service = AuthService(user_repo)
     access_token = auth_service.authenticate_user(username, password)
     if not access_token:
-        flash(request, "Incorrect username or password", "danger")
-        return RedirectResponse(url=request.url_for("login_view"), status_code=status.HTTP_303_SEE_OTHER)
+        return JSONResponse(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            content={"success": False, "message": "Incorrect username or password"},
+        )
     
-    # CHANGE THIS LINE - use /app instead of request.url_for("index_view")
-    response = RedirectResponse(url="/finance/dashboard", status_code=status.HTTP_303_SEE_OTHER)
+    response = JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"success": True, "redirect_url": "/finance/dashboard"},
+    )
     response.set_cookie(
         key="access_token",
         value=access_token,
         httponly=True,
-        samesite="none",
-        secure=True,
+        samesite="lax",
+        secure=request.url.scheme == "https",
     )
     return response

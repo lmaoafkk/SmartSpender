@@ -288,7 +288,11 @@
     }
 
     async function deleteTransaction(id) {
-        if (!confirm('Delete this transaction?')) return;
+        const confirmed = await confirmAction('Are you sure you want to delete this transaction?', {
+            title: 'Delete transaction',
+            confirmText: 'Delete'
+        });
+        if (!confirmed) return;
         try {
             await fetch(`/finance/api/transactions/${id}`, { method: 'DELETE' });
             loadDashboardData();

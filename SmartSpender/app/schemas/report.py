@@ -24,6 +24,7 @@ class MonthlyTrendResponse(BaseModel):
 
 
 class BudgetStatusResponse(BaseModel):
+    id: int
     category: str
     budget: float
     spent: float

@@ -3,6 +3,61 @@
 {% block title %}Budget - Smart$pender{% endblock %}
 
 {% block subpage_content %}
+<style>
+    .budget-card {
+        position: relative;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .budget-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .budget-card.selected {
+        box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.45), 0 16px 36px rgba(13, 110, 253, 0.15);
+        border-color: rgba(13, 110, 253, 0.55);
+    }
+
+    .budget-delete-btn {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.96);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        min-width: 9rem;
+        padding: 0.75rem 1rem;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(220, 53, 69, 0.92);
+        color: #fff;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+        z-index: 2;
+    }
+
+    .budget-card.selected .budget-delete-btn {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate(-50%, -50%) scale(1);
+    }
+
+    .budget-delete-btn:hover {
+        background: rgba(220, 53, 69, 1);
+    }
+
+    .budget-card.selected .budget-card-content {
+        opacity: 0.2;
+    }
+
+    .budget-delete-btn .material-symbols-outlined {
+        font-size: 1.1rem;
+    }
+</style>
 <div class="row">
     <div class="col-lg-8 mx-auto">
         <div class="card">
@@ -36,8 +91,9 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', path='js/finance.js') }}"></script>
 <script>
+    let budgetSelectionBound = false;
+
     async function loadBudgetStatus() {
         try {
             const budgets = await apiCall('/reports/budget-status');
@@ -51,27 +107,76 @@
                 const percent = b.percentage_used;
                 const barClass = b.status === 'on_track' ? 'progress-bar-success' : 'progress-bar-danger';
                 container.innerHTML += `
-                    <div class="budget-card ${b.status} mb-3">
-                        <div class="d-flex justify-content-between mb-2">
-                            <strong>${b.category.charAt(0).toUpperCase() + b.category.slice(1)}</strong>
-                            <span>$${b.spent.toFixed(2)} / $${b.budget.toFixed(2)}</span>
-                        </div>
-                        <div class="progress mb-2">
-                            <div class="progress-bar ${barClass}" role="progressbar" style="width: ${percent}%"></div>
-                        </div>
-                        <div class="d-flex justify-content-between">
-                            <small class="text-muted">Remaining: $${b.remaining.toFixed(2)}</small>
-                            <small class="${b.status === 'on_track' ? 'text-success' : 'text-danger'}">${b.status === 'on_track' ? '✅ On Track' : '⚠️ Over Budget'}</small>
+                    <div class="budget-card ${b.status} mb-3" data-budget-id="${b.id}" tabindex="0" role="button" aria-label="Select ${b.category} budget">
+                        <button class="budget-delete-btn" type="button" data-budget-delete="${b.id}" aria-label="Delete ${b.category} budget">
+                            <span class="material-symbols-outlined">delete</span>
+                            Delete Budget
+                        </button>
+                        <div class="budget-card-content">
+                            <div class="d-flex justify-content-between mb-2">
+                                <strong>${b.category.charAt(0).toUpperCase() + b.category.slice(1)}</strong>
+                                <span>$${b.spent.toFixed(2)} / $${b.budget.toFixed(2)}</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar ${barClass}" role="progressbar" style="width: ${percent}%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Remaining: $${b.remaining.toFixed(2)}</small>
+                                <small class="${b.status === 'on_track' ? 'text-success' : 'text-danger'}">${b.status === 'on_track' ? '✅ On Track' : '⚠️ Over Budget'}</small>
+                            </div>
                         </div>
                     </div>
                 `;
             });
+            bindBudgetCardSelection();
         } catch(e) { console.error(e); }
+    }
+
+    function bindBudgetCardSelection() {
+        const cards = document.querySelectorAll('.budget-card');
+
+        cards.forEach(card => {
+            card.addEventListener('click', () => {
+                const isSelected = card.classList.contains('selected');
+                cards.forEach(item => item.classList.remove('selected'));
+                if (!isSelected) {
+                    card.classList.add('selected');
+                }
+            });
+
+            card.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    card.click();
+                }
+            });
+        });
+
+        document.querySelectorAll('.budget-delete-btn').forEach(button => {
+            button.addEventListener('click', async event => {
+                event.stopPropagation();
+                const budgetId = Number(button.dataset.budgetDelete);
+                await deleteBudgetAndRefresh(budgetId);
+            });
+        });
+
+        if (!budgetSelectionBound) {
+            document.addEventListener('click', event => {
+                if (event.target.closest('.budget-card')) return;
+                document.querySelectorAll('.budget-card').forEach(card => card.classList.remove('selected'));
+            });
+            budgetSelectionBound = true;
+        }
     }
     
     async function saveBudgetAndRefresh() {
         await saveBudget();
         closeModal('budgetModal');
+        await loadBudgetStatus();
+    }
+
+    async function deleteBudgetAndRefresh(id) {
+        await deleteBudget(id);
         await loadBudgetStatus();
     }
     

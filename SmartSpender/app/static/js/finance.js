@@ -24,9 +24,98 @@ async function apiCall(endpoint, options = {}) {
     }
 }
 
+function ensureConfirmationModal() {
+    let modalEl = document.getElementById('actionConfirmModal');
+    if (modalEl) return modalEl;
+
+    modalEl = document.createElement('div');
+    modalEl.className = 'modal fade';
+    modalEl.id = 'actionConfirmModal';
+    modalEl.tabIndex = -1;
+    modalEl.setAttribute('aria-hidden', 'true');
+    modalEl.innerHTML = `
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="actionConfirmTitle">Please confirm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0" id="actionConfirmMessage"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-confirm-cancel>Cancel</button>
+                    <button type="button" class="btn btn-danger" data-confirm-ok>Confirm</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modalEl);
+    return modalEl;
+}
+
+async function confirmAction(message, options = {}) {
+    const {
+        title = 'Please confirm',
+        confirmText = 'Confirm',
+        confirmButtonClass = 'btn-danger'
+    } = options;
+
+    if (!window.bootstrap?.Modal) {
+        return window.confirm(message);
+    }
+
+    const modalEl = ensureConfirmationModal();
+    const titleEl = modalEl.querySelector('#actionConfirmTitle');
+    const messageEl = modalEl.querySelector('#actionConfirmMessage');
+    const cancelButton = modalEl.querySelector('[data-confirm-cancel]');
+    const confirmButton = modalEl.querySelector('[data-confirm-ok]');
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    confirmButton.textContent = confirmText;
+    confirmButton.className = `btn ${confirmButtonClass}`;
+
+    return new Promise(resolve => {
+        let settled = false;
+
+        const cleanup = confirmed => {
+            if (settled) return;
+            settled = true;
+            confirmButton.removeEventListener('click', onConfirm);
+            cancelButton.removeEventListener('click', onCancel);
+            modalEl.removeEventListener('hidden.bs.modal', onHidden);
+            resolve(confirmed);
+        };
+
+        const onConfirm = () => {
+            cleanup(true);
+            modal.hide();
+        };
+
+        const onCancel = () => {
+            cleanup(false);
+            modal.hide();
+        };
+
+        const onHidden = () => cleanup(false);
+
+        confirmButton.addEventListener('click', onConfirm);
+        cancelButton.addEventListener('click', onCancel);
+        modalEl.addEventListener('hidden.bs.modal', onHidden, { once: true });
+        modal.show();
+    });
+}
+
 // ============ USER REFRESH ============
 async function refreshUserData() {
-    const confirmed = confirm('Are you sure you want to refresh your data?');
+    const confirmed = await confirmAction('Are you sure you want to refresh your data?', {
+        title: 'Refresh data',
+        confirmText: 'Refresh',
+        confirmButtonClass: 'btn-warning'
+    });
     if (!confirmed) {
         return;
     }
@@ -261,7 +350,11 @@ async function saveSubscription() {
 
 // ============ DELETE FUNCTIONS ============
 async function deleteTransaction(id) {
-    if (!confirm('Are you sure you want to delete this?')) return;
+    const confirmed = await confirmAction('Are you sure you want to delete this transaction?', {
+        title: 'Delete transaction',
+        confirmText: 'Delete'
+    });
+    if (!confirmed) return;
     
     console.log('Deleting transaction:', id);
     
@@ -330,6 +423,23 @@ async function saveBudget() {
     }
 }
 
+async function deleteBudget(id) {
+    const confirmed = await confirmAction('Are you sure you want to delete this budget?', {
+        title: 'Delete budget',
+        confirmText: 'Delete'
+    });
+    if (!confirmed) return;
+
+    try {
+        await apiCall(`/budgets/${id}`, { method: 'DELETE' });
+        alert('Budget deleted successfully!');
+        location.reload();
+    } catch (error) {
+        console.error('Error deleting budget:', error);
+        alert('Error deleting budget: ' + error.message);
+    }
+}
+
 // ============ MODAL CONTROLS ============
 function showTransactionModal() {
     console.log('showTransactionModal called');
@@ -387,6 +497,7 @@ console.log('Functions available:', {
     saveSubscription: typeof saveSubscription,
     deleteTransaction: typeof deleteTransaction,
     saveBudget: typeof saveBudget,
+    deleteBudget: typeof deleteBudget,
     showTransactionModal: typeof showTransactionModal,
     showSubscriptionModal: typeof showSubscriptionModal,
     showSalaryModal: typeof showSalaryModal,

@@ -52,7 +52,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', path='js/finance.js') }}"></script>
 <script>
     async function loadAllTransactions() {
         try {
@@ -85,10 +84,8 @@
     }
     
     async function deleteTransactionAndRefresh(id) {
-        if (confirm('Delete this transaction?')) {
-            await deleteTransaction(id);
-            await loadAllTransactions();
-        }
+        await deleteTransaction(id);
+        await loadAllTransactions();
     }
     
     document.addEventListener('DOMContentLoaded', loadAllTransactions);

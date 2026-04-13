@@ -28,7 +28,6 @@ def signup_user(request:Request, db:SessionDep,
     auth_service = AuthService(user_repo)
     try:
         user = auth_service.register_user(username, email, password)
-        flash(request, "Registration completed! Sign in now!")
         response = RedirectResponse(url="/?registered=true", status_code=status.HTTP_303_SEE_OTHER)
         return response
     except Exception as e:

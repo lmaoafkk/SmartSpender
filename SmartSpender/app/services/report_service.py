@@ -103,6 +103,7 @@ class ReportService:
             percentage_used = (spent / budget.monthly_limit * 100) if budget.monthly_limit > 0 else 0
             
             result.append({
+                "id": budget.id,
                 "category": budget.category.value,
                 "budget": budget.monthly_limit,
                 "spent": spent,

@@ -43,7 +43,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', path='js/finance.js') }}"></script>
 <script>
     async function loadRecurring() {
         try {
@@ -76,10 +75,8 @@
     }
     
     async function deleteSubscriptionAndRefresh(id) {
-        if (confirm('Cancel this subscription?')) {
-            await deleteTransaction(id);
-            await loadRecurring();
-        }
+        await deleteTransaction(id);
+        await loadRecurring();
     }
     
     document.addEventListener('DOMContentLoaded', loadRecurring);

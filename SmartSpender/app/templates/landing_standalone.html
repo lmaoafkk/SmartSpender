@@ -358,10 +358,26 @@
             async function submitLoginForm() {
                 const btn = loginButton;
                 btn.textContent = 'Signing in…'; btn.disabled = true;
-                const res = await fetch('/login', { method: 'POST', body: new FormData(loginForm) });
-                if (res.redirected) { window.location.href = res.url; return; }
-                btn.textContent = 'Sign In →'; btn.disabled = false;
-                showError('Invalid username or password');
+                try {
+                    const res = await fetch('/login', {
+                        method: 'POST',
+                        body: new FormData(loginForm)
+                    });
+                    const data = await res.json();
+
+                    if (res.ok && data.success && data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                        return;
+                    }
+
+                    btn.textContent = 'Sign In →';
+                    btn.disabled = false;
+                    showError(data.message || 'Invalid username or password');
+                } catch (error) {
+                    btn.textContent = 'Sign In →';
+                    btn.disabled = false;
+                    showError('Sign in failed. Please try again.');
+                }
             }
 
             loginButton.addEventListener('click', submitLoginForm);
