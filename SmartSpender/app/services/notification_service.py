@@ -15,6 +15,7 @@ from app.repositories.transaction_repository import TransactionRepository
 logger = logging.getLogger(__name__)
 
 BUDGET_WARNING_THRESHOLD = 0.9
+BREVO_EMAIL_URL = "https://api.brevo.com/v3/smtp/email"
 RESEND_EMAIL_URL = "https://api.resend.com/emails"
 
 
@@ -87,6 +88,16 @@ class NotificationService:
             return False
 
         settings = get_settings()
+        if settings.brevo_api_key and settings.brevo_sender_email:
+            logger.info("Sending budget alert email with Brevo API.")
+            return self._send_brevo_budget_alert_email(
+                recipient_email,
+                alert,
+                settings.brevo_api_key,
+                settings.brevo_sender_email,
+                settings.brevo_sender_name,
+            )
+
         if settings.resend_api_key and settings.resend_from_email:
             logger.info("Sending budget alert email with Resend.")
             return self._send_resend_budget_alert_email(
@@ -115,6 +126,44 @@ class NotificationService:
                 f"Used: {alert['percentage_used']:.1f}%",
             ]
         )
+
+    def _send_brevo_budget_alert_email(
+        self,
+        recipient_email: str,
+        alert: dict,
+        api_key: str,
+        sender_email: str,
+        sender_name: str,
+    ) -> bool:
+        try:
+            response = httpx.post(
+                BREVO_EMAIL_URL,
+                headers={
+                    "api-key": api_key,
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "sender": {
+                        "name": sender_name,
+                        "email": sender_email,
+                    },
+                    "to": [{"email": recipient_email}],
+                    "subject": alert["title"],
+                    "textContent": self._email_body(alert),
+                },
+                timeout=10,
+            )
+            if response.is_error:
+                logger.warning(
+                    "Brevo rejected budget alert email. Status: %s Body: %s",
+                    response.status_code,
+                    response.text,
+                )
+                return False
+            return True
+        except Exception as exc:
+            logger.warning("Failed to send budget alert email with Brevo: %s", exc)
+            return False
 
     def _send_resend_budget_alert_email(
         self,

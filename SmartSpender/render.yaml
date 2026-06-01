@@ -9,6 +9,12 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.12
+      - key: BREVO_API_KEY
+        sync: false
+      - key: BREVO_SENDER_EMAIL
+        sync: false
+      - key: BREVO_SENDER_NAME
+        value: SmartSpender
       - key: RESEND_API_KEY
         sync: false
       - key: RESEND_FROM_EMAIL

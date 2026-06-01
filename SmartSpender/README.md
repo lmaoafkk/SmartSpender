@@ -64,7 +64,17 @@ For production use, update `.env` with secure secrets and consider using a produ
 
 SmartSpender can email users when a new expense makes them close to or over a category budget. The alert is sent to the signed-in user's account email address.
 
-For Render Free, use Resend's API because outbound SMTP ports are blocked. Add Resend settings to `.env` or Render environment variables:
+For Render Free, use Brevo's API because outbound SMTP ports are blocked. Add Brevo settings to `.env` or Render environment variables:
+
+```env
+BREVO_API_KEY=your_brevo_api_key
+BREVO_SENDER_EMAIL=your_verified_sender_email
+BREVO_SENDER_NAME=SmartSpender
+```
+
+`BREVO_SENDER_EMAIL` must be a sender verified in Brevo.
+
+Resend API is also supported as a fallback:
 
 ```env
 RESEND_API_KEY=re_your_api_key
@@ -85,4 +95,4 @@ SMTP_FROM_NAME=SmartSpender
 SMTP_USE_TLS=true
 ```
 
-For Gmail, use an app password instead of your normal Google password. Gmail requires the real sender email to be your Gmail account or another address you have verified in Gmail, so `SMTP_FROM_NAME` is the safe way to show `SmartSpender` as the sender name. If both Resend and SMTP are configured, SmartSpender uses Resend. The email is sent only when a transaction triggers a budget alert.
+For Gmail, use an app password instead of your normal Google password. Gmail requires the real sender email to be your Gmail account or another address you have verified in Gmail, so `SMTP_FROM_NAME` is the safe way to show `SmartSpender` as the sender name. If Brevo, Resend, and SMTP are all configured, SmartSpender uses Brevo first. The email is sent only when a transaction triggers a budget alert.

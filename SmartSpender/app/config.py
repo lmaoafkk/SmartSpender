@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     smtp_from_email: str = ""
     smtp_from_name: str = "SmartSpender"
     smtp_use_tls: bool = True
+    brevo_api_key: str = ""
+    brevo_sender_email: str = ""
+    brevo_sender_name: str = "SmartSpender"
     resend_api_key: str = ""
     resend_from_email: str = ""
     
