@@ -40,9 +40,10 @@ app.mount("/static", static_files, name="static")
 
 @app.get("/health")
 async def health_check():
+    route_paths = {getattr(route, "path", "") for route in app.routes}
     return {
         "status": "ok",
-        "google_auth_routes": True,
+        "google_auth_routes": "/auth/google/callback" in route_paths,
     }
 
 @app.exception_handler(status.HTTP_401_UNAUTHORIZED)
