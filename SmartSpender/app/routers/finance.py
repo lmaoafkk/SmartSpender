@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Request, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from app.dependencies import SessionDep, AuthDep
 from app.repositories.transaction_repository import TransactionRepository
@@ -96,7 +96,12 @@ async def get_transactions(session: SessionDep, current_user: AuthDep):
 
 
 @router.post("/api/transactions")
-async def create_transaction(transaction_data: TransactionCreate, session: SessionDep, current_user: AuthDep):
+async def create_transaction(
+    transaction_data: TransactionCreate,
+    background_tasks: BackgroundTasks,
+    session: SessionDep,
+    current_user: AuthDep,
+):
     repo = TransactionRepository(session)
     budget_repo = BudgetRepository(session)
     
@@ -115,7 +120,14 @@ async def create_transaction(transaction_data: TransactionCreate, session: Sessi
     created = repo.create(transaction)
     notification_service = NotificationService(repo, budget_repo)
     budget_alert = notification_service.get_budget_alert_for_transaction(created)
-    email_sent = notification_service.send_budget_alert_email(current_user.email, budget_alert)
+    email_queued = False
+    if budget_alert:
+        background_tasks.add_task(
+            notification_service.send_budget_alert_email,
+            current_user.email,
+            budget_alert,
+        )
+        email_queued = True
     
     return {
         "id": created.id,
@@ -125,7 +137,7 @@ async def create_transaction(transaction_data: TransactionCreate, session: Sessi
         "category": created.category.value,
         "date": created.date.isoformat(),
         "budget_alert": budget_alert,
-        "budget_alert_email_sent": email_sent
+        "budget_alert_email_sent": email_queued
     }
 
 
