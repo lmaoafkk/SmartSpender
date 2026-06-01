@@ -38,6 +38,13 @@ app.include_router(finance.router)
 
 app.mount("/static", static_files, name="static")
 
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "ok",
+        "google_auth_routes": True,
+    }
+
 @app.exception_handler(status.HTTP_401_UNAUTHORIZED)
 async def unauthorized_redirect_handler(request: Request, exc: Exception):
     return templates.TemplateResponse(
