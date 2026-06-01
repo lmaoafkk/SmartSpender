@@ -109,6 +109,101 @@ async function confirmAction(message, options = {}) {
     });
 }
 
+function showBudgetPopup(budgetAlert) {
+    if (!budgetAlert) return;
+
+    let popupEl = document.getElementById('budgetAlertPopup');
+    if (!popupEl) {
+        popupEl = document.createElement('div');
+        popupEl.id = 'budgetAlertPopup';
+        popupEl.setAttribute('role', 'alert');
+        popupEl.setAttribute('aria-live', 'assertive');
+        popupEl.innerHTML = `
+            <div class="budget-alert-icon">
+                <span class="material-symbols-outlined">notifications_active</span>
+            </div>
+            <div class="budget-alert-copy">
+                <strong></strong>
+                <span></span>
+            </div>
+            <button type="button" aria-label="Close budget alert">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        `;
+        document.body.appendChild(popupEl);
+
+        popupEl.querySelector('button').addEventListener('click', () => {
+            popupEl.classList.remove('show');
+        });
+    }
+
+    popupEl.className = budgetAlert.level === 'over_budget' ? 'budget-alert-popup danger' : 'budget-alert-popup warning';
+    popupEl.querySelector('strong').textContent = budgetAlert.title || 'Budget alert';
+    popupEl.querySelector('.budget-alert-copy span').textContent = budgetAlert.message;
+
+    window.requestAnimationFrame(() => popupEl.classList.add('show'));
+    window.clearTimeout(window.budgetAlertPopupTimer);
+    window.budgetAlertPopupTimer = window.setTimeout(() => {
+        popupEl.classList.remove('show');
+    }, 6500);
+}
+
+async function enableBudgetNotifications() {
+    if (!('Notification' in window)) {
+        alert('This browser does not support pop-up notifications.');
+        return false;
+    }
+
+    if (Notification.permission === 'granted') {
+        alert('Budget alerts are already enabled.');
+        return true;
+    }
+
+    if (Notification.permission === 'denied') {
+        alert('Notifications are blocked in your browser settings.');
+        return false;
+    }
+
+    const permission = await Notification.requestPermission();
+    alert(permission === 'granted' ? 'Budget alerts enabled!' : 'Budget alerts were not enabled.');
+    return permission === 'granted';
+}
+
+function showBrowserBudgetNotification(budgetAlert) {
+    if (!budgetAlert || !('Notification' in window) || Notification.permission !== 'granted') {
+        return false;
+    }
+
+    const notification = new Notification(budgetAlert.title || 'Budget alert', {
+        body: budgetAlert.message,
+        tag: `budget-${budgetAlert.category}-${budgetAlert.level}`,
+        requireInteraction: budgetAlert.level === 'over_budget'
+    });
+
+    notification.onclick = () => {
+        window.focus();
+        window.location.href = '/finance/budget';
+        notification.close();
+    };
+
+    return true;
+}
+
+function handleBudgetAlert(budgetAlert) {
+    if (!budgetAlert) return;
+    showBrowserBudgetNotification(budgetAlert);
+    showBudgetPopup(budgetAlert);
+}
+
+function closeModal(modalId) {
+    const modalEl = document.getElementById(modalId);
+    if (!modalEl || !window.bootstrap?.Modal) return;
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) {
+        modal.hide();
+    }
+}
+
 // ============ USER REFRESH ============
 async function refreshUserData() {
     const confirmed = await confirmAction('Are you sure you want to refresh your data?', {
@@ -251,7 +346,10 @@ async function saveTransaction() {
         });
         
         console.log('Transaction saved:', result);
-        alert('Transaction saved successfully!');
+        handleBudgetAlert(result.budget_alert);
+        if (!result.budget_alert) {
+            alert('Transaction saved successfully!');
+        }
         
         // Close modal
         const modalEl = document.getElementById('transactionModal');
@@ -266,7 +364,7 @@ async function saveTransaction() {
         if (dateInput) dateInput.value = '';
         
         // Reload page
-        location.reload();
+        setTimeout(() => location.reload(), result.budget_alert ? 1800 : 0);
         
     } catch (error) {
         console.error('Error saving transaction:', error);
@@ -325,7 +423,10 @@ async function saveSubscription() {
         });
         
         console.log('Subscription saved:', result);
-        alert('Subscription saved successfully!');
+        handleBudgetAlert(result.budget_alert);
+        if (!result.budget_alert) {
+            alert('Subscription saved successfully!');
+        }
         
         // Close modal
         const modalEl = document.getElementById('subscriptionModal');
@@ -340,7 +441,7 @@ async function saveSubscription() {
         if (nextDateInput) nextDateInput.value = '';
         
         // Reload page
-        location.reload();
+        setTimeout(() => location.reload(), result.budget_alert ? 1800 : 0);
         
     } catch (error) {
         console.error('Error saving subscription:', error);
@@ -348,7 +449,7 @@ async function saveSubscription() {
     }
 }
 
-// ============ DELETE FUNCTIONS ============
+// Delete function for both transactions and subscriptions 
 async function deleteTransaction(id) {
     const confirmed = await confirmAction('Are you sure you want to delete this transaction?', {
         title: 'Delete transaction',
@@ -368,7 +469,7 @@ async function deleteTransaction(id) {
     }
 }
 
-// ============ BUDGET FUNCTIONS ============
+// Al budget functions 
 async function saveBudget() {
     console.log('saveBudget called');
     
@@ -440,7 +541,9 @@ async function deleteBudget(id) {
     }
 }
 
-// ============ MODAL CONTROLS ============
+// Bootstrap modal functions. This is needed because we want to ensure the modals are properly initialized 
+// before trying to show them, especially if the user has a slow connection 
+// or if there are any issues with loading Bootstrap's JavaScript
 function showTransactionModal() {
     console.log('showTransactionModal called');
     const modalEl = document.getElementById('transactionModal');
@@ -490,6 +593,10 @@ function showBudgetModal() {
 }
 
 // Log that script loaded
+window.enableBudgetNotifications = enableBudgetNotifications;
+window.handleBudgetAlert = handleBudgetAlert;
+window.closeModal = closeModal;
+
 console.log('Finance.js loaded successfully');
 console.log('Functions available:', {
     updateSalary: typeof updateSalary,
@@ -502,5 +609,6 @@ console.log('Functions available:', {
     showSubscriptionModal: typeof showSubscriptionModal,
     showSalaryModal: typeof showSalaryModal,
     showBudgetModal: typeof showBudgetModal,
-    refreshUserData: typeof refreshUserData
+    refreshUserData: typeof refreshUserData,
+    enableBudgetNotifications: typeof enableBudgetNotifications
 });

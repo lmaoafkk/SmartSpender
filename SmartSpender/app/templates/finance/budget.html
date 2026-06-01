@@ -129,7 +129,32 @@
                 `;
             });
             bindBudgetCardSelection();
+            showBudgetStatusAlert(budgets);
         } catch(e) { console.error(e); }
+    }
+
+    function showBudgetStatusAlert(budgets) {
+        const alertBudget = budgets
+            .filter(b => b.percentage_used >= 90)
+            .sort((a, b) => b.percentage_used - a.percentage_used)[0];
+
+        if (!alertBudget) return;
+
+        const categoryName = alertBudget.category.charAt(0).toUpperCase() + alertBudget.category.slice(1);
+        const isOverBudget = alertBudget.spent > alertBudget.budget;
+        const alertKey = `${alertBudget.id}-${alertBudget.spent}-${alertBudget.budget}-${alertBudget.percentage_used}`;
+
+        if (sessionStorage.getItem('lastBudgetStatusAlert') === alertKey) return;
+        sessionStorage.setItem('lastBudgetStatusAlert', alertKey);
+
+        handleBudgetAlert({
+            title: 'Budget alert',
+            message: isOverBudget
+                ? `You are over your ${categoryName} budget by $${Math.abs(alertBudget.remaining).toFixed(2)}.`
+                : `You are close to your ${categoryName} budget. $${alertBudget.remaining.toFixed(2)} remaining.`,
+            category: alertBudget.category,
+            level: isOverBudget ? 'over_budget' : 'near_budget'
+        });
     }
 
     function bindBudgetCardSelection() {

@@ -59,3 +59,21 @@ A FastAPI web application for personal finance management, featuring transaction
 ## Production
 
 For production use, update `.env` with secure secrets and consider using a production database. See `config.py` for options.
+
+## Email Budget Alerts
+
+SmartSpender can email users when a new expense makes them close to or over a category budget. The alert is sent to the signed-in user's account email address.
+
+Add SMTP settings to `.env`:
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+SMTP_FROM_EMAIL=your_email@gmail.com
+SMTP_FROM_NAME=SmartSpender
+SMTP_USE_TLS=true
+```
+
+For Gmail, use an app password instead of your normal Google password. Gmail requires the real sender email to be your Gmail account or another address you have verified in Gmail, so `SMTP_FROM_NAME` is the safe way to show `SmartSpender` as the sender name. The email is sent only when a transaction triggers a budget alert.

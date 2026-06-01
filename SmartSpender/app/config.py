@@ -27,9 +27,17 @@ class Settings(BaseSettings):
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = ""
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from_email: str = ""
+    smtp_from_name: str = "SmartSpender"
+    smtp_use_tls: bool = True
     
     model_config = SettingsConfigDict(
         env_file=(
+            APP_DIR / ".env",
             PROJECT_DIR / ".env",
             REPO_DIR / ".env",
         )

@@ -64,12 +64,38 @@
             to   { opacity: 1; transform: translate(-50%, -50%); }
         }
 
-        .brand-dot {
-            width: 12px; height: 12px;
+        .brand-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin: 0 auto 22px;
+        }
+
+        .brand-dots span {
+            width: 9px; height: 9px;
             border-radius: 50%;
             background: #00e5ff;
-            box-shadow: 0 0 18px rgba(0,229,255,0.25);
-            margin: 0 auto 22px;
+            box-shadow: 0 0 18px rgba(0,229,255,0.35);
+            animation: dotPulse 1.25s ease-in-out infinite;
+        }
+
+        .brand-dots span:nth-child(2) {
+            animation-delay: 0.16s;
+        }
+
+        .brand-dots span:nth-child(3) {
+            animation-delay: 0.32s;
+        }
+
+        @keyframes dotPulse {
+            0%, 80%, 100% {
+                opacity: 0.35;
+                transform: translateY(0) scale(0.9);
+            }
+            40% {
+                opacity: 1;
+                transform: translateY(-5px) scale(1.08);
+            }
         }
 
         .logo {
@@ -92,6 +118,8 @@
             letter-spacing: 0.06em;
             font-weight: 400;
             font-family: 'Space Mono', monospace;
+            min-height: 1.5em;
+            white-space: nowrap;
         }
 
         /* Bottom Buttons */
@@ -367,9 +395,13 @@
 <div class="bg-grid"></div>
 
 <div class="logo-container">
-    <div class="brand-dot"></div>
+    <div class="brand-dots" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
     <div class="logo">Smart<span>Spender</span></div>
-    <div class="tagline">Intelligent Finance Tracking</div>
+    <div class="tagline" id="taglineScramble">Intelligent Finance Tracking</div>
 </div>
 
 <div class="buttons">
@@ -389,6 +421,57 @@
 </div>
 
 <script>
+    const scramblePhrases = [
+        'Intelligent Finance Tracking',
+        'Decode Your Spending Habits',
+        'Budget Smarter Every Day',
+        'Track Money In Real Time',
+        'Plan Better. Spend Better.'
+    ];
+    const scrambleChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$#%&';
+    const taglineScramble = document.getElementById('taglineScramble');
+    let phraseIndex = 0;
+    let scrambleFrame = 0;
+
+    function scrambleToPhrase(nextPhrase) {
+        const previousText = taglineScramble.textContent;
+        const maxLength = Math.max(previousText.length, nextPhrase.length);
+        const totalFrames = 28;
+        scrambleFrame = 0;
+
+        function tick() {
+            const progress = scrambleFrame / totalFrames;
+            const resolvedCount = Math.floor(progress * maxLength);
+            let output = '';
+
+            for (let i = 0; i < maxLength; i += 1) {
+                if (i < resolvedCount) {
+                    output += nextPhrase[i] || '';
+                } else if (nextPhrase[i] === ' ') {
+                    output += ' ';
+                } else {
+                    output += scrambleChars[Math.floor(Math.random() * scrambleChars.length)];
+                }
+            }
+
+            taglineScramble.textContent = output.trimEnd();
+            scrambleFrame += 1;
+
+            if (scrambleFrame <= totalFrames) {
+                window.requestAnimationFrame(tick);
+            } else {
+                taglineScramble.textContent = nextPhrase;
+            }
+        }
+
+        tick();
+    }
+
+    setInterval(() => {
+        phraseIndex = (phraseIndex + 1) % scramblePhrases.length;
+        scrambleToPhrase(scramblePhrases[phraseIndex]);
+    }, 2800);
+
     function openPanel(type) {
         const content = document.getElementById('panelContent');
 

@@ -4,6 +4,7 @@ from app.dependencies import SessionDep, AuthDep
 from app.repositories.transaction_repository import TransactionRepository
 from app.repositories.budget_repository import BudgetRepository
 from app.services.report_service import ReportService
+from app.services.notification_service import NotificationService
 from app.models.transaction import Transaction, TransactionType, TransactionCategory
 from app.models.budget import Budget, BudgetCategory
 from app.schemas.transaction import TransactionCreate, TransactionUpdate
@@ -97,6 +98,7 @@ async def get_transactions(session: SessionDep, current_user: AuthDep):
 @router.post("/api/transactions")
 async def create_transaction(transaction_data: TransactionCreate, session: SessionDep, current_user: AuthDep):
     repo = TransactionRepository(session)
+    budget_repo = BudgetRepository(session)
     
     transaction = Transaction(
         name=transaction_data.name,
@@ -111,6 +113,9 @@ async def create_transaction(transaction_data: TransactionCreate, session: Sessi
     )
     
     created = repo.create(transaction)
+    notification_service = NotificationService(repo, budget_repo)
+    budget_alert = notification_service.get_budget_alert_for_transaction(created)
+    email_sent = notification_service.send_budget_alert_email(current_user.email, budget_alert)
     
     return {
         "id": created.id,
@@ -118,7 +123,9 @@ async def create_transaction(transaction_data: TransactionCreate, session: Sessi
         "amount": created.amount,
         "type": created.type.value,
         "category": created.category.value,
-        "date": created.date.isoformat()
+        "date": created.date.isoformat(),
+        "budget_alert": budget_alert,
+        "budget_alert_email_sent": email_sent
     }
 
 
