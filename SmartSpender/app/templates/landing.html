@@ -12,6 +12,20 @@
         height: 100%;
         object-fit: cover;
         z-index: -2;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.35s ease;
+    }
+
+    .video-background.is-playing {
+        opacity: 1;
+    }
+
+    .video-background::-webkit-media-controls,
+    .video-background::-webkit-media-controls-panel,
+    .video-background::-webkit-media-controls-start-playback-button {
+        display: none !important;
+        -webkit-appearance: none;
     }
     
     .overlay {
@@ -110,7 +124,7 @@
 
 {% block content %}
 <!-- Video Background -->
-<video class="video-background" autoplay loop muted playsinline>
+<video class="video-background" autoplay loop muted playsinline preload="auto" aria-hidden="true" tabindex="-1" disablepictureinpicture>
     <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-currency-with-coins-and-graphs-23273-large.mp4" type="video/mp4">
 </video>
 <div class="overlay"></div>
@@ -140,6 +154,23 @@
 
 {% block external_js %}
 <script>
+    const decorativeVideo = document.querySelector('.video-background');
+    if (decorativeVideo) {
+        const showVideoWhenPlaying = () => decorativeVideo.classList.add('is-playing');
+        const hideVideoFallback = () => decorativeVideo.classList.remove('is-playing');
+
+        decorativeVideo.addEventListener('playing', showVideoWhenPlaying);
+        decorativeVideo.addEventListener('error', hideVideoFallback);
+        decorativeVideo.querySelectorAll('source').forEach((source) => {
+            source.addEventListener('error', hideVideoFallback);
+        });
+
+        const playPromise = decorativeVideo.play();
+        if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(hideVideoFallback);
+        }
+    }
+
     // Slide panel functions
     function openSlidePanel(type) {
         const panel = document.getElementById('slidePanel');
