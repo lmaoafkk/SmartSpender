@@ -4,6 +4,8 @@ import logging
 import smtplib
 from typing import Optional
 
+import httpx
+
 from app.config import get_settings
 from app.models.budget import BudgetCategory
 from app.models.transaction import Transaction, TransactionType
@@ -13,6 +15,7 @@ from app.repositories.transaction_repository import TransactionRepository
 logger = logging.getLogger(__name__)
 
 BUDGET_WARNING_THRESHOLD = 0.9
+RESEND_EMAIL_URL = "https://api.resend.com/emails"
 
 
 class NotificationService:
@@ -84,27 +87,68 @@ class NotificationService:
             return False
 
         settings = get_settings()
+        if settings.resend_api_key and settings.resend_from_email:
+            return self._send_resend_budget_alert_email(
+                recipient_email,
+                alert,
+                settings.resend_api_key,
+                settings.resend_from_email,
+            )
+
         if not settings.smtp_host or not settings.smtp_from_email:
-            logger.info("Skipping budget alert email because SMTP is not configured.")
+            logger.info("Skipping budget alert email because email is not configured.")
             return False
 
+        return self._send_smtp_budget_alert_email(recipient_email, alert)
+
+    def _email_body(self, alert: dict) -> str:
+        return "\n".join(
+            [
+                alert["message"],
+                "",
+                f"Spent: ${alert['spent']:.2f}",
+                f"Budget: ${alert['budget']:.2f}",
+                f"Used: {alert['percentage_used']:.1f}%",
+            ]
+        )
+
+    def _send_resend_budget_alert_email(
+        self,
+        recipient_email: str,
+        alert: dict,
+        api_key: str,
+        from_email: str,
+    ) -> bool:
+        try:
+            response = httpx.post(
+                RESEND_EMAIL_URL,
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": from_email,
+                    "to": [recipient_email],
+                    "subject": alert["title"],
+                    "text": self._email_body(alert),
+                },
+                timeout=10,
+            )
+            response.raise_for_status()
+            return True
+        except Exception as exc:
+            logger.warning("Failed to send budget alert email with Resend: %s", exc)
+            return False
+
+    def _send_smtp_budget_alert_email(self, recipient_email: str, alert: dict) -> bool:
+        settings = get_settings()
         smtp_password = settings.smtp_password.replace(" ", "")
 
         message = EmailMessage()
         message["Subject"] = alert["title"]
         message["From"] = formataddr((settings.smtp_from_name, settings.smtp_from_email))
         message["To"] = recipient_email
-        message.set_content(
-            "\n".join(
-                [
-                    alert["message"],
-                    "",
-                    f"Spent: ${alert['spent']:.2f}",
-                    f"Budget: ${alert['budget']:.2f}",
-                    f"Used: {alert['percentage_used']:.1f}%",
-                ]
-            )
-        )
+        message.set_content(self._email_body(alert))
 
         try:
             with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=10) as smtp:

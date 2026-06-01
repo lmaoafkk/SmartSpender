@@ -64,7 +64,16 @@ For production use, update `.env` with secure secrets and consider using a produ
 
 SmartSpender can email users when a new expense makes them close to or over a category budget. The alert is sent to the signed-in user's account email address.
 
-Add SMTP settings to `.env`:
+For Render Free, use Resend's API because outbound SMTP ports are blocked. Add Resend settings to `.env` or Render environment variables:
+
+```env
+RESEND_API_KEY=re_your_api_key
+RESEND_FROM_EMAIL=SmartSpender <noreply@yourdomain.com>
+```
+
+`RESEND_FROM_EMAIL` must use a domain verified in Resend when sending to real users.
+
+For local Gmail SMTP testing, you can use these settings instead:
 
 ```env
 SMTP_HOST=smtp.gmail.com
@@ -76,4 +85,4 @@ SMTP_FROM_NAME=SmartSpender
 SMTP_USE_TLS=true
 ```
 
-For Gmail, use an app password instead of your normal Google password. Gmail requires the real sender email to be your Gmail account or another address you have verified in Gmail, so `SMTP_FROM_NAME` is the safe way to show `SmartSpender` as the sender name. The email is sent only when a transaction triggers a budget alert.
+For Gmail, use an app password instead of your normal Google password. Gmail requires the real sender email to be your Gmail account or another address you have verified in Gmail, so `SMTP_FROM_NAME` is the safe way to show `SmartSpender` as the sender name. If both Resend and SMTP are configured, SmartSpender uses Resend. The email is sent only when a transaction triggers a budget alert.

@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     smtp_from_email: str = ""
     smtp_from_name: str = "SmartSpender"
     smtp_use_tls: bool = True
+    resend_api_key: str = ""
+    resend_from_email: str = ""
     
     model_config = SettingsConfigDict(
         env_file=(
