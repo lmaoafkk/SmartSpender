@@ -136,6 +136,33 @@
             transform: translateY(-3px);
         }
 
+        .btn-google {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            color: #1f2937;
+            border: 1px solid rgba(255,255,255,0.14);
+            box-shadow: 0 4px 20px rgba(255,255,255,0.12);
+        }
+        .btn-google:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(255,255,255,0.2);
+        }
+
+        .google-mark {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #4285f4;
+            font-weight: 800;
+            font-family: Arial, sans-serif;
+            background: #fff;
+            flex: 0 0 auto;
+        }
+
         /* Backdrop */
         .backdrop {
             position: fixed; inset: 0;
@@ -269,6 +296,24 @@
         }
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
+        .google-auth-btn {
+            width: 100%; padding: 13px 16px;
+            background: #fff;
+            border: none; border-radius: 12px;
+            color: #1f2937; font-size: 0.92rem; font-weight: 700;
+            font-family: 'Outfit', sans-serif; cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .google-auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255,255,255,0.14);
+        }
+
         .divider {
             display: flex; align-items: center; gap: 12px;
             margin: 26px 0;
@@ -317,6 +362,7 @@
 <div class="buttons">
     <button class="btn btn-primary" onclick="openPanel('register')">Create Account</button>
     <button class="btn btn-ghost"   onclick="openPanel('login')">Sign In</button>
+    <button class="btn btn-google" onclick="handleGoogleSignIn()"><span class="google-mark">G</span> Sign in with Google</button>
 </div>
 
 <div class="backdrop" id="backdrop" onclick="closePanel()"></div>
@@ -349,6 +395,7 @@
                     </div>
                     <button type="button" class="submit-btn" id="login-submit-btn">Sign In →</button>
                 </form>
+                <button type="button" class="google-auth-btn" onclick="handleGoogleSignIn()"><span class="google-mark">G</span> Sign in with Google</button>
                 <div class="divider"><span>or</span></div>
                 <p class="switch-link">No account? <a href="#" onclick="openPanel('register');return false;">Create one free</a></p>
             `;
@@ -434,7 +481,17 @@
         setTimeout(() => el.style.display = 'none', 3500);
     }
 
+    function handleGoogleSignIn() {
+        window.location.href = '/auth/google';
+    }
+
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+    const authError = new URLSearchParams(window.location.search).get('auth_error');
+    if (authError) {
+        openPanel('login');
+        showError(authError);
+    }
 </script>
 
 </body>

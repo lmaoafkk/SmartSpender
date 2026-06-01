@@ -1,6 +1,12 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 import os
+from pathlib import Path
+
+
+APP_DIR = Path(__file__).resolve().parent.parent
+PROJECT_DIR = APP_DIR.parent
+REPO_DIR = PROJECT_DIR.parent
 
 @lru_cache
 def get_settings():
@@ -18,5 +24,13 @@ class Settings(BaseSettings):
     db_additional_overflow:int=10
     db_pool_timeout:int=10
     db_pool_recycle:int=10
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = ""
     
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(
+        env_file=(
+            PROJECT_DIR / ".env",
+            REPO_DIR / ".env",
+        )
+    )
