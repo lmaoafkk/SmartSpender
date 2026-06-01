@@ -88,6 +88,7 @@ class NotificationService:
 
         settings = get_settings()
         if settings.resend_api_key and settings.resend_from_email:
+            logger.info("Sending budget alert email with Resend.")
             return self._send_resend_budget_alert_email(
                 recipient_email,
                 alert,
@@ -96,9 +97,12 @@ class NotificationService:
             )
 
         if not settings.smtp_host or not settings.smtp_from_email:
-            logger.info("Skipping budget alert email because email is not configured.")
+            logger.warning(
+                "Skipping budget alert email because neither Resend nor SMTP is configured."
+            )
             return False
 
+        logger.info("Sending budget alert email with SMTP.")
         return self._send_smtp_budget_alert_email(recipient_email, alert)
 
     def _email_body(self, alert: dict) -> str:
@@ -134,7 +138,13 @@ class NotificationService:
                 },
                 timeout=10,
             )
-            response.raise_for_status()
+            if response.is_error:
+                logger.warning(
+                    "Resend rejected budget alert email. Status: %s Body: %s",
+                    response.status_code,
+                    response.text,
+                )
+                return False
             return True
         except Exception as exc:
             logger.warning("Failed to send budget alert email with Resend: %s", exc)
